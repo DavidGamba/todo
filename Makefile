@@ -14,15 +14,17 @@ all: $(CDIR).a
 # Compiling
 %.o: %.c
 	@echo [Compiling]: $<
-	$(CC) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
-#linking
-$(CDIR).a: $(OBJ)
+# Linking
+%.a: %.c
+	@echo [Linking]: $<
+	$(CC) $(CFLAGS) $< -o $@
+
+# Link main
+$(CDIR).a: main.o
 	@echo [Linking]: $< $@
-	$(CC) $< -o $@
-
-# $(CDIR).a: %.o
-# 	mv main.o $(CDIR).a
+	$(CC) $(CFLAGS) $< -o $@
 
 .PHONY : clean
 

@@ -11,6 +11,11 @@ OBJ=$(SRC:.c=.o)
 
 all: $(CDIR).a
 
+# Link main
+$(CDIR).a: main.o get_line.o
+	@echo [Linking]: $^ $@
+	$(CC) $(CFLAGS) $^ -o $@
+
 # Compiling
 %.o: %.c
 	@echo [Compiling]: $<
@@ -21,10 +26,6 @@ all: $(CDIR).a
 	@echo [Linking]: $<
 	$(CC) $(CFLAGS) $< -o $@
 
-# Link main
-$(CDIR).a: main.o
-	@echo [Linking]: $< $@
-	$(CC) $(CFLAGS) $< -o $@
 
 .PHONY : clean
 

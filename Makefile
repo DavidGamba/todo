@@ -1,6 +1,6 @@
 # Macros
 CC = gcc
-CFLAGS = -I. -w
+CFLAGS = -I. -Wall
 CDIR= $(notdir $(CURDIR))
 
 SRC=$(wildcard *.c)
@@ -12,7 +12,7 @@ OBJ=$(SRC:.c=.o)
 all: $(CDIR).a
 
 # Link main
-$(CDIR).a: main.o get_line.o
+$(CDIR).a: main.o utils.o
 	@echo [Linking]: $^ $@
 	$(CC) $(CFLAGS) $^ -o $@
 

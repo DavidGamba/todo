@@ -2,13 +2,11 @@
 #include <string.h>
 #include <errno.h>
 
-int echo_args(int argc, char *argv[])
+void echo_args(int argc, char *argv[])
 {
     int i;
     for(i = 0; i < argc; i++)
-
         printf("arg %d: %s\n", i, argv[i]);
-    return 0;
 }
 
 int print_file(int argc, char *argv[])
@@ -58,10 +56,9 @@ int get_line(char line[], int max)
     return nch;
 }
 
-int debug(char *str)
+void debug(char *str)
 {
 #ifdef DEBUG
     printf("D| %s", str);
 #endif
-    return 0;
 }

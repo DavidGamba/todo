@@ -15,6 +15,7 @@ main(int argc, char *argv[])
     help();
     echo_args(argc, argv);
     print_file(argc, argv);
+    print_dir(argc, argv);
     return 0;
     char line[MAX_LINE_LEGHT];
     while(get_line(line, MAX_LINE_LEGHT) != EOF)

@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <error.h>
+#include <stdarg.h>
 
 // error (exit, errno, message);
 
@@ -67,35 +68,71 @@ int print_file(int argc, char *argv[])
     }
     return 0;
 }
-/*
-int
-print_dir(int argc, char *argv[])
-{
-    int i;
-    FILE *dp;
-    int c;
-    char *p_name = argv[0];
 
-    for(i = 1; i < argc; i++)
+int print_dir(int argc, char *argv[])
+{
+    DIR           *dip;
+    struct dirent *dit;
+    int i = 0;
+
+    /* check to see if user entered a directory name */
+    if (argc < 2)
     {
-        errno = 0;
-        dp = opendir(argv[i]);
-        if(dp == NULL)
-        {
-            int err = errno;
-            fprintf(stderr, "%s: can't open '%s': %s\n",
-                basename(p_name), argv[i], strerror(err));
-            continue;
-        }
-        file = readdir(dp);
+        printf("Usage: %s <directory>\n", argv[0]);
+        return 0;
     }
-    return 0;
+
+    /* DIR *opendir(const char *name);
+     *
+     * Open a directory stream to argv[1] and make sure
+     * it's a readable and valid (directory) */
+    if ((dip = opendir(argv[1])) == NULL)
+    {
+        int err = errno;
+        print_error("opendir",
+            "can't open '%s': %s\n", argv[1], strerror(err));
+        return 0;
+    }
+
+    printf("Directory stream is now open\n");
+
+    /*  struct dirent *readdir(DIR *dir);
+     *
+     * Read in the files from argv[1] and print */
+    while ((dit = readdir(dip)) != NULL)
+    {
+        i++;
+        printf("\n%s", dit->d_name);
+    }
+
+    printf("\n\nreaddir() found a total of %i files\n", i);
+
+    /* int closedir(DIR *dir);
+     *
+     * Close the stream to argv[1]. And check for errors. */
+    if (closedir(dip) == -1)
+    {
+        perror("closedir");
+        return 0;
+    }
+
+    printf("\nDirectory stream is now closed\n");
+    return 1;
 }
-*/
 
 void debug(char *str)
 {
 #ifdef DEBUG
     printf("D| %s", str);
 #endif
+}
+
+void print_error(char *function, const char *format, ...)
+{
+    va_list args;
+    char *f_name = function;
+    fprintf(stderr, "%s: ", basename(f_name));
+    va_start(args, format);
+    vfprintf(stderr, format, args);
+    va_end(args);
 }

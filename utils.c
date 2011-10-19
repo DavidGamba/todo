@@ -10,19 +10,15 @@
 
 // error (exit, errno, message);
 
-int
-echo_args(int argc, char *argv[])
+void echo_args(int argc, char *argv[])
 {
     int i;
     char *p_name = argv[0];
-
-    for(i = 1; i < argc; i++)
+    for(i = 0; i < argc; i++)
         printf("%s: arg %d: %s\n", basename(p_name), i, argv[i]);
-    return 0;
 }
 
-int
-get_line(char line[], int max)
+int get_line(char line[], int max)
 {
     int nch = 0;
     int c;
@@ -47,8 +43,7 @@ get_line(char line[], int max)
     return nch;
 }
 
-int
-print_file(int argc, char *argv[])
+int print_file(int argc, char *argv[])
 {
     int i;
     FILE *fp;
@@ -97,3 +92,10 @@ print_dir(int argc, char *argv[])
     return 0;
 }
 */
+
+void debug(char *str)
+{
+#ifdef DEBUG
+    printf("D| %s", str);
+#endif
+}

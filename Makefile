@@ -1,6 +1,6 @@
 # Macros
 CC = gcc
-CFLAGS = -I. -Wall
+CFLAGS = -I. -Wall -DDEBUG
 CDIR= $(notdir $(CURDIR))
 
 SRC=$(wildcard *.c)

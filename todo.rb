@@ -1,4 +1,4 @@
-#!/usr/bin/ruby
+#!/usr/bin/env ruby
 # add current dir to the path
 $: << File.join(File.dirname(__FILE__))
 
@@ -106,6 +106,7 @@ EOF
   def track(days_ago = 0)
     day = DateTime.now.strftime('%Y%m%d')
     file = "#{@dir}/#{day}-track.yml"
+    return unless File.exists? file
     f = YAML.load_file file
     f.each do |time,info|
       tod = Time.parse(time).strftime('%H:%M:%S')

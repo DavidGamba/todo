@@ -72,17 +72,31 @@ EOF
 
   def time(subject)
     day = DateTime.now.strftime('%Y%m%d')
+    second = now
     file = "#{@dir}/#{day}-track.yml"
     if File.exists? file
       yml = YAML.load_file file
-      yml[now] = subject
+      last_entry = nil
+      yml.each do |time,info|
+        last_entry = time unless last_entry
+        if Time.parse(time) > Time.parse(last_entry)
+          last_entry = time
+        end
+      end
+      lenght = Time.parse(second) - Time.parse(last_entry)
+      yml[last_entry]['lenght'] = lenght
+      yml[second] = Hash.new
+      yml[second]['subject'] = subject
+      yml[second]['lenght'] = nil
       f = File.open(file, 'w')
       f.write yml.to_yaml
       f.close
     else
       puts subject
       yml = Hash.new
-      yml[now] = subject
+      yml[second] = Hash.new
+      yml[second]['subject'] = subject
+      yml[second]['lenght'] = nil
       f = File.open(file, 'a')
       f.write yml.to_yaml
       f.close
@@ -93,13 +107,12 @@ EOF
     day = DateTime.now.strftime('%Y%m%d')
     file = "#{@dir}/#{day}-track.yml"
     f = YAML.load_file file
-    last_time = nil
-    f.each do |time,task|
-      last_time = time unless last_time
-      lenght = Time.parse(time) - Time.parse(last_time)
-      lenght = lenght / 60
-      printf("%-s (%5s) %s\n",time, lenght.round(2), task)
-      last_time = time
+    f.each do |time,info|
+      tod = Time.parse(time).strftime('%H:%M:%S')
+      subject = info['subject']
+      lenght  = info['lenght']
+      lenght  = (lenght / 60 ).round(2) if lenght
+      printf("%-s (%5s) %s\n",tod, lenght, subject)
     end
   end
 end

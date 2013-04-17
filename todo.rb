@@ -5,6 +5,8 @@ $: << File.join(File.dirname(__FILE__))
 class Todo
   require 'date'
   require 'fileutils'
+  require 'yaml'
+  require 'time'
 
   def initialize
     @dir = "#{ENV['HOME']}/.todo"
@@ -67,6 +69,39 @@ EOF
   def now
     DateTime.now.strftime('%Y%m%d_%H%M%S')
   end
+
+  def time(subject)
+    day = DateTime.now.strftime('%Y%m%d')
+    file = "#{@dir}/#{day}-track.yml"
+    if File.exists? file
+      yml = YAML.load_file file
+      yml[now] = subject
+      f = File.open(file, 'w')
+      f.write yml.to_yaml
+      f.close
+    else
+      puts subject
+      yml = Hash.new
+      yml[now] = subject
+      f = File.open(file, 'a')
+      f.write yml.to_yaml
+      f.close
+    end
+  end
+
+  def track(days_ago = 0)
+    day = DateTime.now.strftime('%Y%m%d')
+    file = "#{@dir}/#{day}-track.yml"
+    f = YAML.load_file file
+    last_time = nil
+    f.each do |time,task|
+      last_time = time unless last_time
+      lenght = Time.parse(time) - Time.parse(last_time)
+      lenght = lenght / 60
+      printf("%-s (%5s) %s\n",time, lenght.round(2), task)
+      last_time = time
+    end
+  end
 end
 
 # Only run the following code when this file is the main file being run
@@ -90,5 +125,11 @@ if __FILE__==$0
     index = ARGV.shift
     abort "Missing index" unless index
     todo.delete(index)
+  when /time/i
+    subject  = ARGV.shift
+    abort "Missing subject" unless subject
+    todo.time(subject)
+  when /track/i
+    todo.track
   end
 end

@@ -1,4 +1,27 @@
 #!/usr/bin/env ruby
+=begin
+
+# TODO 1 2013-05-29 0.1
+
+## NAME
+
+todo - keep track of your day!
+
+## SYNOPSIS
+
+`todo` [--help] [--version] [*COMMAND*] [*OPTIONS*]
+
+## COMMANDS
+
+`list`
+  Show a list of todo's
+
+## BUG REPORTS
+
+https://github.com/DavidGamba/todo.git
+
+=end
+
 # add current dir to the path
 $: << File.join(File.dirname(__FILE__))
 
@@ -70,6 +93,7 @@ EOF
     DateTime.now.strftime('%Y%m%d_%H%M%S')
   end
 
+  # Add an activity to the track file
   def time(subject)
     day = DateTime.now.strftime('%Y%m%d')
     second = now
@@ -103,6 +127,7 @@ EOF
     end
   end
 
+  # Shows timed activities
   def track(days_ago = 0)
     day = DateTime.now.strftime('%Y%m%d')
     file = "#{@dir}/#{day}-track.yml"
@@ -121,13 +146,34 @@ end
 # Only run the following code when this file is the main file being run
 # instead of having been required or loaded by another file
 if __FILE__==$0
+  require 'optparse'
+  require 'binman'
+
+
+  options = {}
+  actions = {}
+  optparse = OptionParser.new do |opts|
+    opts.on("-p <priority>", "priority") do |opt|
+      options[:priority] = opt
+    end
+    opts.on("-h", "--help") do
+      BinMan.show
+      exit
+    end
+    opts.on("--version") do
+      puts "#{File.basename($0)} 0.1"
+      exit
+    end
+  end
+  optparse.parse!
+
   action = ARGV.shift
   todo = Todo.new
   case action
   when /create/i
     subject  = ARGV.shift
     abort "Missing subject" unless subject
-    priority = ARGV.shift || 'normal'
+    priority = options[:priority] || 'normal'
     todo.create(subject, priority)
   when /list/i
     todo.list
@@ -145,5 +191,7 @@ if __FILE__==$0
     todo.time(subject)
   when /track/i
     todo.track
+  else
+    todo.list
   end
 end

@@ -13,8 +13,45 @@ todo - keep track of your day!
 
 ## COMMANDS
 
-`list`
-  Show a list of todo's
+`list` [-t|--track] [-f|--filename] [-c|--closed]
+  Show a list of todo's (default) or a list of day tracks.
+
+  Note: The index given by this command can be used everywhere else.
+
+  `--track` Show index for tracks.
+
+  `--filename` Show filename for todo's instead of subject.
+
+  `--closed` Show closed todo's.
+
+`create` *SUBJECT* [-e|--edit] [-p|--priority *PRIORITY*]
+  Create a todo. Use --edit to launch an editor after creation.
+
+`time` *SUBJECT*
+  Track a new activity in your day track.
+
+`track` [*INDEX*]
+  Show the given day's (defaults to current) tracked activities.
+
+`edit` *INDEX* [-t|--track] [-c|--closed]
+  Edit a todo (default) or a day track.
+
+  `--track` Edit tracks.
+
+  `--closed` Edit closed todo's.
+
+`close` *INDEX*
+  Close a todo.
+
+`reopen` *INDEX*
+  Reopen a todo.
+
+`rm` *INDEX* [-t|--track] [-c|--closed]
+  Delete a todo (default) or a day track.
+
+  `--track` Delete tracks.
+
+  `--closed` Delete closed todo's.
 
 ## BUG REPORTS
 

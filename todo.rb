@@ -68,43 +68,44 @@ class Todo
   require 'yaml'
   require 'time'
 
-  def initialize
+  def initialize(options = {})
     @dir = "#{ENV['HOME']}/.todo"
+    @todo_ext  = options[:todo_ext]
+    @track_ext = options[:track_ext]
     FileUtils.mkdir @dir unless Dir.exists? @dir
   end
 
-  def list
+  # lists all files in @dir and prints them in 'sort' order. If filter
+  # equals yml then the filename is printed, otherwise the first line is
+  # printed (the subject line).
+  # * *Args* :
+  #   - +filter+ -> optional, the filename must match the filter
+  # * *Returns* :
+  #   - List of filtered files in sorted order
+  def list filter = @todo_ext, filename = false
     i = 0
-    Dir.entries(@dir).sort.each do |f|
+    Dir.entries(@dir).sort.reverse.each do |f|
       next if File.directory? f
+      next unless f.match(/#{filter}$/i)
       i+=1
-#     puts "#{i}: #{f}"
-      file = File.open("#{@dir}/#{f}", 'r')
-      puts "#{i}: #{file.readline}"
-      file.close
-    end
-  end
-
-  def get_file_by_index(index)
-    i = 0
-    Dir.entries(@dir).sort.each do |f|
-      next if File.directory? f
-      i+=1
-      if i == index.to_i
-        return f
+      if filter == @track_ext || filename
+        puts "#{i}: #{f}"
+      else
+        file = File.open("#{@dir}/#{f}", 'r')
+        puts "#{i}: #{file.readline}"
+        file.close
       end
     end
-    return nil
   end
 
-  def delete(index)
-    f = get_file_by_index(index)
+  def delete index, filter = @todo_ext
+    f = get_file_by_index(index, filter)
     abort "Wrong index" if f.nil?
     puts "rm #{f}"
     File.delete "#{@dir}/#{f}"
   end
 
-  def create(subject, priority)
+  def create_task subject, priority, edit = false
     file = "#{@dir}/#{now}-#{priority}-open.adoc"
     puts file
     puts subject
@@ -113,17 +114,11 @@ class Todo
     f.close
   end
 
-  def edit(index)
-    f = get_file_by_index(index)
+  def edit index, filter = @todo_ext
+    f = get_file_by_index(index, filter)
     abort "Wrong index" if f.nil?
     puts "edit #{f}"
     system("vim #{@dir}/#{f}")
-  end
-
-  def template(subject)
-    file = <<EOF
-#{subject}
-EOF
   end
 
   def now
@@ -165,19 +160,41 @@ EOF
   end
 
   # Shows timed activities
-  def track(days_ago = 0)
-    day = DateTime.now.strftime('%Y%m%d')
-    file = "#{@dir}/#{day}-track.yml"
-    return unless File.exists? file
-    f = YAML.load_file file
+  def track(index = 1)
+    file = get_file_by_index(index, @track_ext)
+    abort "Wrong index" if file.nil?
+    puts file
+    f = YAML.load_file "#{@dir}/#{file}"
     f.each do |time,info|
       tod = Time.parse(time).strftime('%H:%M:%S')
       subject = info['subject']
       lenght  = info['lenght']
-      lenght  = (lenght / 60 ).round(2) if lenght
+      lenght  = (lenght / 3600 ).round(2) if lenght
       printf("%-s (%5s) %s\n",tod, lenght, subject)
     end
   end
+
+  private
+
+    def get_file_by_index(index, filter = '')
+      i = 0
+      Dir.entries(@dir).sort.reverse.each do |f|
+        next if File.directory? f
+        next unless f.match(/#{filter}$/i)
+        i+=1
+        if i == index.to_i
+          return f
+        end
+      end
+      return nil
+    end
+
+    def template(subject)
+      file = <<EOF
+#{subject}
+EOF
+    end
+
 end
 
 # Only run the following code when this file is the main file being run
@@ -186,12 +203,19 @@ if __FILE__==$0
   require 'optparse'
   require 'binman'
 
-
   options = {}
-  actions = {}
+  options[:todo_ext]  = 'adoc'
+  options[:track_ext] = 'yml'
+  options[:track]     = options[:todo_ext]
   optparse = OptionParser.new do |opts|
     opts.on("-p <priority>", "priority") do |opt|
       options[:priority] = opt
+    end
+    opts.on("-t", "--track", "day track") do |opt|
+      options[:track] = options[:track_ext]
+    end
+    opts.on("-f", "--filename", "print filename") do |opt|
+      options[:filename] = opt
     end
     opts.on("-h", "--help") do
       BinMan.show
@@ -205,30 +229,31 @@ if __FILE__==$0
   optparse.parse!
 
   action = ARGV.shift
-  todo = Todo.new
+  todo = Todo.new(options)
   case action
+  when /list/i
+    todo.list options[:track], options[:filename]
   when /create/i
-    subject  = ARGV.shift
+    subject = ARGV.join(' ')
     abort "Missing subject" unless subject
     priority = options[:priority] || 'normal'
-    todo.create(subject, priority)
-  when /list/i
-    todo.list
+    edit     = options[:edit]
+    todo.create_task subject, priority, edit
+  when /time/i
+    subject = ARGV.join(' ')
+    abort "Missing subject" unless subject
+    todo.time subject
+  when /track/i
+    index = ARGV.shift || 1
+    todo.track index
   when /edit/i
-    index = ARGV.shift
-    abort "Missing index" unless index
-    todo.edit(index)
+    index = ARGV.shift || 1
+    todo.edit index, options[:track]
   when /rm/i
     index = ARGV.shift
     abort "Missing index" unless index
-    todo.delete(index)
-  when /time/i
-    subject  = ARGV.shift
-    abort "Missing subject" unless subject
-    todo.time(subject)
-  when /track/i
-    todo.track
+    todo.delete argument, options[:track]
   else
-    todo.list
+    todo.list options[:track], options[:filename]
   end
 end

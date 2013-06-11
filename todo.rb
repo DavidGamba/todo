@@ -252,7 +252,7 @@ if __FILE__==$0
   when /rm/i
     index = ARGV.shift
     abort "Missing index" unless index
-    todo.delete argument, options[:track]
+    todo.delete index, options[:track]
   else
     todo.list options[:track], options[:filename]
   end

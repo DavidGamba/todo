@@ -121,6 +121,14 @@ class Todo
     system("vim #{@dir}/#{f}")
   end
 
+  def close index, filter = @todo_ext
+    f = get_file_by_index(index, filter)
+    abort "Wrong index" if f.nil?
+    puts "close #{f}"
+    closed_f = f.gsub(/-open\.adoc$/,'-closed.adoc')
+    FileUtils.mv("#{@dir}/#{f}", "#{@dir}/#{closed_f}")
+  end
+
   def now
     DateTime.now.strftime('%Y%m%d_%H%M%S')
   end
@@ -204,18 +212,23 @@ if __FILE__==$0
   require 'binman'
 
   options = {}
-  options[:todo_ext]  = 'adoc'
-  options[:track_ext] = 'yml'
-  options[:track]     = options[:todo_ext]
+  options[:todo_ext]         = 'adoc'
+  options[:closed_todo_ext]  = '-closed.adoc'
+  options[:track_ext]        = 'yml'
+
+  options[:extension]     = options[:todo_ext]
   optparse = OptionParser.new do |opts|
     opts.on("-p <priority>", "priority") do |opt|
       options[:priority] = opt
     end
     opts.on("-t", "--track", "day track") do |opt|
-      options[:track] = options[:track_ext]
+      options[:extension] = options[:track_ext]
     end
     opts.on("-f", "--filename", "print filename") do |opt|
       options[:filename] = opt
+    end
+    opts.on("-c", "--closed", "list closed todos") do |opt|
+      options[:list_closed] = opt
     end
     opts.on("-h", "--help") do
       BinMan.show
@@ -232,7 +245,11 @@ if __FILE__==$0
   todo = Todo.new(options)
   case action
   when /list/i
-    todo.list options[:track], options[:filename]
+    if options[:list_closed]
+      todo.list options[:closed_todo_ext], options[:filename]
+    else
+      todo.list options[:extension], options[:filename]
+    end
   when /create/i
     subject = ARGV.join(' ')
     abort "Missing subject" unless subject
@@ -248,12 +265,16 @@ if __FILE__==$0
     todo.track index
   when /edit/i
     index = ARGV.shift || 1
-    todo.edit index, options[:track]
+    todo.edit index, options[:extension]
+  when /close/i
+    index = ARGV.shift
+    abort "Missing index" unless index
+    todo.close index, options[:extension]
   when /rm/i
     index = ARGV.shift
     abort "Missing index" unless index
-    todo.delete index, options[:track]
+    todo.delete index, options[:extension]
   else
-    todo.list options[:track], options[:filename]
+    todo.list options[:extension], options[:filename]
   end
 end

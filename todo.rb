@@ -212,16 +212,18 @@ if __FILE__==$0
   require 'binman'
 
   options = {}
-  options[:todo_ext]         = 'adoc'
-  options[:closed_todo_ext]  = '-closed.adoc'
-  options[:track_ext]        = 'yml'
+  options[:todo_ext]        = 'adoc'
+  options[:todo_ext_open]   = '-open.adoc'
+  options[:todo_ext_closed] = '-closed.adoc'
+  options[:track_ext]       = 'yml'
 
-  options[:extension]     = options[:todo_ext]
+  options[:extension]       = options[:todo_ext_open]
   optparse = OptionParser.new do |opts|
     opts.on("-p <priority>", "priority") do |opt|
       options[:priority] = opt
     end
     opts.on("-t", "--track", "day track") do |opt|
+      options[:track] = opt
       options[:extension] = options[:track_ext]
     end
     opts.on("-f", "--filename", "print filename") do |opt|
@@ -245,10 +247,14 @@ if __FILE__==$0
   todo = Todo.new(options)
   case action
   when /list/i
-    if options[:list_closed]
-      todo.list options[:closed_todo_ext], options[:filename]
+    if options[:list_closed] && options[:track]
+      abort "Can't use '--closed' along with '--track'"
+    elsif options[:list_closed]
+      todo.list options[:todo_ext_closed], options[:filename]
+    elsif options[:track]
+      todo.list options[:track_ext], options[:filename]
     else
-      todo.list options[:extension], options[:filename]
+      todo.list options[:todo_ext_open], options[:filename]
     end
   when /create/i
     subject = ARGV.join(' ')

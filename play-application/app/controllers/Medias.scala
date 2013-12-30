@@ -1,7 +1,9 @@
 package controllers
 
-import play.api.mvc.{Action, Controller, Flash,Result}
+import play.api.libs.concurrent.Execution.Implicits._
+import play.api.mvc.{Action, Controller, SimpleResult, ResponseHeader}
 import play.api.i18n.Messages
+import play.api.libs.iteratee.Enumerator
 
 import models.Media
 
@@ -10,48 +12,27 @@ object Medias extends Controller {
   // TODO: Make errors i18n
 
   def song(name: String) = {
-    val mymeType: String = name.split('.').drop(1).lastOption match {
-      case Some("mp3") => "audio/mpeg"
-      case _ => "audio/mpeg"
-    }
-    get_file(name, mymeType)
+    get_file( Media.get_song_filename(name) )
   }
 
   def video(name: String) = {
-    val mymeType: String = name.split('.').drop(1).lastOption match {
-      case Some("mpeg") => "video/mpeg"
-      case Some("mp4")  => "video/mp4"
-      case Some("ogg")  => "video/ogg"
-      case Some("webm") => "video/webm"
-      case _ => "video/mpeg"
-    }
-    get_file(name, mymeType)
+    get_file( Media.get_video_filename(name) )
   }
 
   def image(name: String) = {
-    val mymeType: String = name.split('.').drop(1).lastOption match {
-      case Some("jpg")  => "image/jpeg"
-      case Some("jpeg") => "image/jpeg"
-      case Some("png")  => "image/png"
-      case Some("gif")  => "image/gif"
-      case _ => "image/jpeg"
-    }
-    get_file(name, mymeType)
+    get_file( Media.get_image_filename(name) )
   }
 
-  def get_file(name: String, mimeType: String) = Action { implicit request =>
+  def get_file(name: String) = Action { implicit request =>
     import java.lang.IllegalArgumentException
     import java.io.FileNotFoundException
     try {
-      val type_image = "^image/.*".r
-      val type_audio = "^audio/.*".r
-      val type_video = "^video/.*".r
-      val my_file: Array[Byte] = mimeType match {
-        case type_audio() => Media.get_song(name)
-        case type_image() => Media.get_image(name)
-        case type_video() => Media.get_video(name)
-      }
-      Ok(my_file).as(mimeType)
+      val file = new java.io.File(name)
+      val fileContent: Enumerator[Array[Byte]] = Enumerator.fromFile(file)
+      SimpleResult(
+        header = ResponseHeader(200, Map(CONTENT_LENGTH -> file.length.toString)),
+        body = fileContent
+      )
     }
     catch {
       case e: IllegalArgumentException =>
